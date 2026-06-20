@@ -2,9 +2,7 @@
 
 A modern, client-side web application that transforms project descriptions into professional, achievement-oriented resume bullet points. Built as a portfolio project for the Digital Heroes coding assessment.
 
-![App Screenshot](./screenshots/preview.png)
 
-> **Note:** Add a screenshot of the running app to `screenshots/preview.png` before submitting your portfolio.
 
 ## Overview
 
