@@ -23,9 +23,9 @@ export default function OutputSection({ bullets, projectName, onToast, isLoading
       <section className="glass-card p-8 animate-fade-in">
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <FileText className="w-12 h-12 text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-400 mb-2">No bullets yet</h3>
+          <h3 className="text-lg font-medium text-gray-400 mb-2">No resume bullets generated yet.</h3>
           <p className="text-sm text-gray-500 max-w-sm">
-            Fill in your project details and click Generate Bullets to create professional resume points.
+          Fill in your project details and click Generate Bullets to create professional, ATS-friendly bullet points.
           </p>
         </div>
       </section>

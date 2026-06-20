@@ -11,25 +11,21 @@ const ACTION_VERBS = [
   'Automated',
 ];
 
-const TECH_CONNECTORS = ['using', 'leveraging', 'with', 'powered by', 'built with'];
-
 const IMPACT_PHRASES = [
   'resulting in {impact}',
-  'delivering {impact}',
-  'achieving {impact}',
-  'which {impact}',
-  'to {impact}',
+  'leading to {impact}',
+  'contributing to {impact}',
+  'thereby achieving {impact}',
 ];
 
-/**
- * Shuffle array using Fisher-Yates (creates a copy).
- */
 function shuffle(array) {
   const copy = [...array];
+
   for (let i = copy.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
+
   return copy;
 }
 
@@ -40,24 +36,19 @@ function pick(array) {
 function formatTechnologies(technologies) {
   const items = technologies
     .split(/[,;]+/)
-    .map((t) => t.trim())
+    .map((item) => item.trim())
     .filter(Boolean);
 
   if (items.length === 0) return '';
   if (items.length === 1) return items[0];
   if (items.length === 2) return `${items[0]} and ${items[1]}`;
+
   return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
 }
 
 function capitalizeFirst(text) {
   if (!text) return '';
   return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-function ensurePeriod(text) {
-  const trimmed = text.trim();
-  if (!trimmed) return '';
-  return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
 }
 
 function lowercaseFirst(text) {
@@ -69,127 +60,185 @@ function normalizeText(text) {
   return text.trim().replace(/\.+$/, '');
 }
 
-/**
- * Build three distinct bullet point templates.
- */
-function buildTemplates({ projectName, techString, buildMid, buildLead, impact }) {
-  const hasImpact = Boolean(impact?.trim());
-  const impactLower = lowercaseFirst(normalizeText(impact));
+function ensurePeriod(text) {
+  const trimmed = text.trim();
+
+  if (!trimmed) return '';
+
+  return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
+}
+
+function buildImpact(impact) {
+  if (!impact?.trim()) return '';
+
+  const phrase = pick(IMPACT_PHRASES);
+  return phrase.replace('{impact}', lowercaseFirst(normalizeText(impact)));
+}
+
+function buildTemplates({
+  projectName,
+  techString,
+  buildLead,
+  buildMid,
+  impact,
+}) {
+  const impactText = buildImpact(impact);
 
   const templates = [
-    // Template 1: Project overview with full tech stack
+    // Template 1
     () => {
       const verb = pick(ACTION_VERBS);
-      const connector = pick(TECH_CONNECTORS);
+
       let bullet = `${verb} ${projectName}, ${buildMid}`;
+
       if (techString) {
-        bullet += ` ${connector} ${techString}`;
+        bullet += ` using ${techString}`;
       }
-      bullet = ensurePeriod(bullet);
-      if (hasImpact) {
-        const phrase = pick(IMPACT_PHRASES).replace('{impact}', impactLower);
-        bullet = bullet.replace(/\.$/, `, ${phrase}.`);
+
+      if (impactText) {
+        bullet += `, ${impactText}`;
       }
-      return bullet;
+
+      return ensurePeriod(bullet);
     },
 
-    // Template 2: Technical focus / pipeline emphasis
+    // Template 2
     () => {
-      const verb = pick(['Engineered', 'Architected', 'Implemented', 'Built', 'Designed']);
-      let bullet;
+      const verb = pick([
+        'Engineered',
+        'Architected',
+        'Implemented',
+        'Designed',
+      ]);
+
+      let bullet = `${verb} an end-to-end solution`;
+
       if (techString) {
-        bullet = `${verb} ${projectName} leveraging ${techString} — ${buildLead}`;
+        bullet += ` using ${techString}`;
+      }
+
+      bullet += ` to build ${projectName}, ${buildMid}`;
+
+      if (impactText) {
+        bullet += `, ${impactText}`;
+      }
+
+      return ensurePeriod(bullet);
+    },
+
+    // Template 3
+    () => {
+      let bullet = '';
+
+      if (techString) {
+        bullet = `Leveraged ${techString} to create ${projectName}, enabling ${buildMid}`;
       } else {
-        bullet = `${verb} ${projectName} — ${buildLead}`;
+        bullet = `Created ${projectName}, enabling ${buildMid}`;
       }
-      bullet = ensurePeriod(bullet);
-      if (hasImpact) {
-        bullet = bullet.replace(/\.$/, ` and ${impactLower}.`);
+
+      if (impactText) {
+        bullet += `, ${impactText}`;
       }
-      return bullet;
+
+      return ensurePeriod(bullet);
     },
 
-    // Template 3: Impact / outcome oriented
+    // Template 4
     () => {
-      const verb = pick(['Created', 'Delivered', 'Optimized', 'Spearheaded', 'Automated']);
-      let bullet = `${verb} ${projectName} — ${buildLead}`;
-      if (techString) {
-        bullet += `, utilizing ${techString} for end-to-end implementation`;
-      }
-      bullet = ensurePeriod(bullet);
-      if (hasImpact) {
-        const adverb = pick(['ultimately', 'directly', 'successfully']);
-        bullet = bullet.replace(/\.$/, `, ${adverb} ${impactLower}.`);
-      }
-      return bullet;
-    },
+      const verb = pick([
+        'Built',
+        'Developed',
+        'Implemented',
+        'Integrated',
+      ]);
 
-    // Template 4: Integration / system design angle
-    () => {
-      const verb = pick(['Integrated', 'Architected', 'Developed', 'Built']);
-      const techPart = techString
-        ? ` by integrating ${techString} into a cohesive application stack`
-        : ' through a well-structured full-stack implementation';
-      let bullet = `${verb} ${projectName}${techPart}, enabling ${buildMid}`;
-      bullet = ensurePeriod(bullet);
-      if (hasImpact) {
-        bullet = bullet.replace(/\.$/, ` to ${impactLower}.`);
-      }
-      return bullet;
-    },
+      let bullet = `${verb} ${buildLead}`;
 
-    // Template 5: Achievement-focused with quantifiable framing
-    () => {
-      const verb = pick(['Built', 'Developed', 'Engineered', 'Designed']);
-      let bullet = `${verb} and deployed ${projectName}`;
       if (techString) {
         bullet += ` with ${techString}`;
       }
-      bullet += `, ${buildMid}`;
-      bullet = ensurePeriod(bullet);
-      if (hasImpact) {
-        const impactPhrase = pick(IMPACT_PHRASES).replace('{impact}', impactLower);
-        bullet = bullet.replace(/\.$/, ` — ${impactPhrase}.`);
+
+      bullet += ` as part of ${projectName}`;
+
+      if (impactText) {
+        bullet += `, ${impactText}`;
       }
-      return bullet;
+
+      return ensurePeriod(bullet);
     },
 
-    // Template 6: Problem-solution framing
+    // Template 5
     () => {
-      const verb = pick(['Designed', 'Implemented', 'Created', 'Optimized']);
-      let bullet = `${verb} ${projectName}: ${buildLead}`;
+      const verb = pick([
+        'Designed',
+        'Architected',
+        'Developed',
+        'Created',
+      ]);
+
+      let bullet = `${verb} ${projectName} as ${buildMid}`;
+
       if (techString) {
-        bullet += `, powered by ${techString}`;
+        bullet += ` by leveraging ${techString}`;
       }
-      bullet = ensurePeriod(bullet);
-      if (hasImpact) {
-        bullet = bullet.replace(/\.$/, `, ${impactLower}.`);
+
+      if (impactText) {
+        bullet += `, ${impactText}`;
       }
-      return bullet;
+
+      return ensurePeriod(bullet);
+    },
+
+    // Template 6
+    () => {
+      const verb = pick([
+        'Engineered',
+        'Built',
+        'Developed',
+        'Optimized',
+      ]);
+
+      let bullet = `${verb} a scalable solution for ${buildMid}`;
+
+      if (techString) {
+        bullet += ` using ${techString}`;
+      }
+
+      if (projectName) {
+        bullet += ` under the project ${projectName}`;
+      }
+
+      if (impactText) {
+        bullet += `, ${impactText}`;
+      }
+
+      return ensurePeriod(bullet);
     },
   ];
 
   return shuffle(templates).slice(0, 3);
 }
 
-/**
- * Generate three professional resume bullet points from form data.
- */
-export function generateBullets({ projectName, technologies, build, impact }) {
+export function generateBullets({
+  projectName,
+  technologies,
+  build,
+  impact,
+}) {
   const name = projectName.trim();
   const techString = formatTechnologies(technologies);
-  const buildNormalized = normalizeText(build);
-  const buildMid = lowercaseFirst(buildNormalized);
-  const buildLead = capitalizeFirst(buildNormalized);
-  const impactText = impact?.trim() || '';
 
-  const templateFns = buildTemplates({
+  const buildNormalized = normalizeText(build);
+  const buildLead = capitalizeFirst(buildNormalized);
+  const buildMid = lowercaseFirst(buildNormalized);
+
+  const templates = buildTemplates({
     projectName: name,
     techString,
-    buildMid,
     buildLead,
-    impact: impactText,
+    buildMid,
+    impact: impact?.trim() || '',
   });
 
-  return templateFns.map((fn) => fn());
+  return templates.map((template) => template());
 }
